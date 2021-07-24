@@ -71,6 +71,9 @@ export const TeamPlaying = () => {
 				</LinearGradient>
 				<IconButton
 					rounded='full'
+					onPress={() => {
+						send({ type: 'RESET_GAME' });
+					}}
 					mt={4}
 					_pressed={{
 						opacity: 0.5,
@@ -121,7 +124,13 @@ export const TeamPlaying = () => {
 					}}
 					bg='white'
 					icon={
-						<Icon as={Ionicons} size={8} color='gray.500' name='play-outline' ml={0.5} />
+						<Icon
+							as={Ionicons}
+							size={8}
+							color='gray.500'
+							name='play-skip-forward'
+							ml={0.5}
+						/>
 					}
 				/>
 			</Stack>

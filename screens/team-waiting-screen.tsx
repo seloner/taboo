@@ -25,7 +25,7 @@ export const TeamWaiting = () => {
 					send(gameModel.events.RESET_GAME());
 				}}
 			/>
-			<Stack>
+			<Stack mb={10}>
 				<Progress
 					colorScheme='pink'
 					size='lg'

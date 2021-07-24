@@ -1,15 +1,28 @@
 import * as React from 'react';
 import { useActor } from '@xstate/react';
-import { Box, Heading, Input, Stack, Text } from 'native-base';
+import { Box, Icon, Input, Stack, Text } from 'native-base';
 import { PrimaryButton } from '../buttons';
 import { gameActor, gameModel } from '../game/gameMachine';
 import { AppTitle } from '../title';
+import { Ionicons } from '@expo/vector-icons';
 
 export const StartScreen = () => {
 	const [state, send] = useActor(gameActor);
 	return (
 		<>
-			<AppTitle />
+			<Box justifyContent='center' flexDirection='row' display='flex' alignItems='center'>
+				<AppTitle />
+				<Icon
+					onPress={() => {
+						send({ type: 'SHOW_SETTINGS' });
+					}}
+					marginLeft={5}
+					color='white'
+					height={30}
+					width={30}
+					as={<Ionicons name='settings-outline' />}
+				/>
+			</Box>
 			<Box>
 				<Stack space={4} mb={8}>
 					<Box>

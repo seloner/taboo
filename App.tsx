@@ -3,10 +3,14 @@ import { useActor, useMachine } from '@xstate/react';
 import React, { useEffect } from 'react';
 import { gameActor } from './game/gameMachine';
 import { NativeBaseProvider, Box } from 'native-base';
-import { StartScreen } from './screens';
-import { TeamWaiting } from './screens/team-waiting-screen';
-import { TeamPlaying } from './screens/team-playing.screen';
-import { PauseScreen } from './screens/pause-screen';
+import {
+	StartScreen,
+	TeamPlaying,
+	TeamWaiting,
+	SettingsScreen,
+	EndScreen,
+	PauseScreen,
+} from './screens';
 
 // import { inspect } from '@xstate/inspect';
 // inspect({
@@ -39,21 +43,25 @@ export default function App() {
 					_web={{
 						maxWidth: 500,
 					}}
+					minHeight={500}
 					px={12}
 					w='100%'
-					height='70%'
 					justifyContent='space-between'
 				>
 					{(() => {
 						switch (true) {
 							case state.matches('waitingGame'):
 								return <StartScreen />;
+							case state.matches('settings'):
+								return <SettingsScreen />;
 							case state.hasTag('paused'):
 								return <PauseScreen />;
 							case state.hasTag('playing'):
 								return <TeamPlaying />;
 							case state.hasTag('teamPlaying'):
 								return <TeamWaiting />;
+							case state.hasTag('ended'):
+								return <EndScreen />;
 							default:
 								return null;
 						}

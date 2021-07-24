@@ -1,4 +1,4 @@
-import { assign, createMachine, interpret } from 'xstate';
+import { actions, assign, createMachine, interpret } from 'xstate';
 import { createModel } from 'xstate/lib/model';
 
 interface Question {
@@ -8,28 +8,28 @@ interface Question {
 
 interface Settings {
 	roundTimeInSeconds: number;
-	correctAnwserMultiplier: 1;
+	correctAnwserMultiplier: number;
 	targetPoints: number;
 }
 
-const defaultSettings: Settings = {
-	roundTimeInSeconds: 5,
+export const defaultSettings: Settings = {
+	roundTimeInSeconds: 20,
 	correctAnwserMultiplier: 1,
 	targetPoints: 5,
 };
 
-const testQuestions: Question[] = Array(45)
-	.fill(0)
-	.map((e, i) => ({
-		word: `Καραγκούνης ${i}`,
-		forbiddenWords: ['Euro', 'ποδόσφαιρο', 'Παναθηναικός'],
-	}));
+type Winner = {
+	name: string;
+	points: number;
+};
+
 export const gameModel = createModel(
 	{
 		settings: defaultSettings,
 		secondsUntilEndOfRound: defaultSettings.roundTimeInSeconds,
 		currentTeam: 'A' as 'A' | 'B',
 		currentQuestion: {} as Question,
+		winner: {} as Winner,
 		teams: {
 			teamA: {
 				name: 'giorgos',
@@ -40,7 +40,7 @@ export const gameModel = createModel(
 				points: 0,
 			},
 		},
-		questions: testQuestions,
+		questions: require('../assets/data.json').data,
 	},
 	{
 		events: {
@@ -54,6 +54,9 @@ export const gameModel = createModel(
 			WRONG_ASNWER: () => ({}),
 			CORRECT_ANSWER: () => ({}),
 			RESET_GAME: () => ({}),
+			SHOW_SETTINGS: () => ({}),
+			SETTINGS_CHANGE: (settings: Settings) => ({ settings }),
+			OK: () => ({}),
 		},
 	},
 );
@@ -85,8 +88,24 @@ export const gameMachineFactory = ({
 				},
 			},
 			states: {
+				settings: {
+					on: {
+						'OK': {
+							target: 'waitingGame',
+						},
+						'SETTINGS_CHANGE': {
+							actions: gameModel.assign((_, e) => ({
+								settings: e.settings,
+							})),
+						},
+					},
+					onExit: 'resetRoundTime',
+				},
 				waitingGame: {
 					on: {
+						'SHOW_SETTINGS': {
+							target: 'settings',
+						},
 						START_GAME: {
 							target: 'playing',
 							actions: 'pickRandomQuestion',
@@ -133,6 +152,10 @@ export const gameMachineFactory = ({
 										},
 										WRONG_ASNWER: {
 											actions: ['pickRandomQuestion'],
+										},
+										RESET_GAME: {
+											target: '#taboo.waitingGame',
+											actions: 'resetGame',
 										},
 										PASS: {
 											actions: ['pickRandomQuestion'],
@@ -214,6 +237,7 @@ export const gameMachineFactory = ({
 						{
 							target: 'ended',
 							cond: 'gameEnded',
+							actions: 'assignWinner',
 						},
 						{
 							target: '#A',
@@ -221,6 +245,12 @@ export const gameMachineFactory = ({
 					],
 				},
 				ended: {
+					on: {
+						'RESET_GAME': {
+							target: '#taboo.waitingGame',
+							actions: 'resetGame',
+						},
+					},
 					tags: 'ended',
 				},
 			},
@@ -282,6 +312,25 @@ export const gameMachineFactory = ({
 						};
 					}
 				}),
+				assignWinner: gameModel.assign((ctx) => {
+					if (ctx.teams.teamA.points > ctx.teams.teamB.points) {
+						return {
+							...ctx,
+							winner: {
+								name: ctx.teams.teamA.name,
+								points: ctx.teams.teamA.points,
+							},
+						};
+					} else {
+						return {
+							...ctx,
+							winner: {
+								name: ctx.teams.teamB.name,
+								points: ctx.teams.teamB.points,
+							},
+						};
+					}
+				}, undefined),
 				decrementRoundTime: gameModel.assign(
 					{
 						secondsUntilEndOfRound: (ctx, e) => ctx.secondsUntilEndOfRound - 1,
